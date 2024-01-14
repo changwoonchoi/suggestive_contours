@@ -24,6 +24,9 @@ Real-time suggestive contours - these days, it also draws many other lines.
 //#include <GL/glext.h>
 #endif
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <vector>
 using namespace trimesh;
 using namespace std;
 
@@ -36,15 +39,18 @@ const bool use_3dtexc = false;
 
 // Globals: mesh...
 TriMesh *themesh;
+std::vector<std::vector<double>> pose_matrix(4, std::vector<double>(4, 0.0));
+
 
 // Two cameras: the primary one, and an alternate one to fix the lines
 // and see them from a different direction
 int dual_vpmode = false, mouse_moves_alt = false;
 GLCamera camera, camera_alt;
 xform xf, xf_alt;
-float fov = 0.7f;
+float fov = 1.414 * 0.69111112070083618f;
 double alt_projmatrix[16];
 char *xffilename; // Filename where we look for "home" position
+char *save_path;
 point viewpos;    // Current view position
 
 // Toggles for drawing various lines
@@ -1810,6 +1816,12 @@ void redraw()
 {
 	timestamp t = now();
 	viewpos = inv(xf) * point(0,0,0);
+	std::cout<<endl;
+	std::cout<<endl;
+	std::cout<<endl;
+	std::cout<<"viewpos"<<viewpos<<std::endl;
+	std::cout<<endl;
+	std::cout<<endl;
 	GLUI_Master.auto_set_viewport();
 
 	// If dual viewports, first draw in window using camera_alt
@@ -1833,8 +1845,10 @@ void redraw()
 
 		// Now we're ready to draw in the subwindow
 	}
-
-	camera.setupGL(xf * themesh->bsphere.center, themesh->bsphere.r);
+	std::cout<<"HERE"<<std::endl;
+	point global_center = point(0,0,0);
+	camera.setupGL(xf * global_center, 1.0);
+	camera.set_fov(fov);
 
 	cls();
 
@@ -1868,11 +1882,19 @@ void resetview()
 	camera.stopspin();
 	camera_alt.stopspin();
 
-	if (!xf.read(xffilename))
+	if (!xf.read(xffilename)){
+		std::cout<<"xf file not found"<<endl;
 		xf = xform::trans(0, 0, -3.5f / fov * themesh->bsphere.r) *
 		     xform::trans(-themesh->bsphere.center);
+	} else{
+		xf = inv(xf);
+	}
+	
 	camera_alt = camera;
 	xf_alt = xf;
+	std::cout << "xf" << xf << std::endl;
+	std::cout << "bsphere center" << themesh->bsphere.center <<std::endl;
+	std::cout <<"bsphere r" << themesh->bsphere.r <<std::endl;
 
 	// Reset light position too
 	lightdir->reset();
@@ -1966,18 +1988,21 @@ void dump_image(int dummy = 0)
 	const char filenamepattern[] = "img%d.ppm";
 	int imgnum = 0;
 	FILE *f;
-	while (1) {
-		char filename[1024];
-		sprintf(filename, filenamepattern, imgnum++);
-		f = fopen(filename, "rb");
-		if (!f) {
-			f = fopen(filename, "wb");
-			printf("\n\nSaving image %s... ", filename);
-			fflush(stdout);
-			break;
-		}
-		fclose(f);
-	}
+	f = fopen(save_path, "wb");
+	fflush(stdout);
+
+	// while (1) {
+	// 	char filename[1024];
+	// 	sprintf(filename, filenamepattern, imgnum++);
+	// 	f = fopen(filename, "rb");
+	// 	if (!f) {
+	// 		f = fopen(filename, "wb");
+	// 		printf("\n\nSaving image %s... ", filename);
+	// 		fflush(stdout);
+	// 		break;
+	// 	}
+	// 	fclose(f);
+	// }
 
 	// Read pixels
 	GLUI_Master.auto_set_viewport();
@@ -2281,7 +2306,7 @@ void usage(const char *myname)
 
 int main(int argc, char *argv[])
 {
-        int wwid = 820, wht = 700;
+        int wwid = 800, wht = 800;
         for (int j = 1; j < argc; j++) {
 		if (argv[j][0] == '+') {
 			sscanf(argv[j]+1, "%d,%d,%f,%f", &wwid, &wht,
@@ -2304,17 +2329,49 @@ int main(int argc, char *argv[])
 			break;
 	}
 	const char *filename = argv[i];
+	// const char *posefilename = argv[i+1];
+	// std::cout << "filename" << filename <<std::endl;
+	// std::cout << "posefilename" << posefilename << std::endl;
+
+	// // read pose
+	// std::ifstream inputFile(posefilename);
+	// if (!inputFile.is_open()){
+	// 	std::cerr << "Error opening file" << posefilename << std::endl;
+	// 	return 1; // return error code
+	// }
+
+
+	// for (int i = 0; i < 4; i ++){
+	// 	for (int j=0; j<4; j++){
+	// 		if(!(inputFile >> pose_matrix[i][j])){
+	// 			std::cerr << "Error reading file for pose_matrix" << std::endl;
+	// 			return 1;
+	// 		}
+	// 	}
+	// }
+	// inputFile.close();
+
+	// std::cout<< "The 4x4 pose_matrix read from the file is \n";
+	// for (int i = 0; i < 4; i++){
+	// 	for (int j = 0; j < 4; j++){
+	// 		std::cout << pose_matrix[i][j] << ' ';
+	// 	}
+	// 	std::cout << '\n';
+	// }
 
 	themesh = TriMesh::read(filename);
 	if (!themesh)
 		usage(argv[0]);
 
-	xffilename = new char[strlen(filename) + 4];
-	strcpy(xffilename, filename);
-	char *dot = strrchr(xffilename, '.');
-	if (!dot)
-		dot = strrchr(xffilename, 0);
-	strcpy(dot, ".xf");
+	// xffilename = new char[strlen(filename) + 4];
+	// strcpy(xffilename, filename);
+	// char *dot = strrchr(xffilename, '.');
+	// if (!dot)
+	// 	dot = strrchr(xffilename, 0);
+	// strcpy(dot, ".xf");
+
+	xffilename = argv[i+1];
+	save_path = argv[i+2];
 
 	themesh->need_tstrips();
 	themesh->need_bsphere();

@@ -383,6 +383,8 @@ void GLCamera::setupGL(const point &scene_center, float scene_size) const
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+	std::cout<<"scene_center: "<<scene_center[0]<<" "<<scene_center[1]<<" "<<scene_center[2]<<std::endl;
+	std::cout<<"left: "<<left<<" right: "<<right<<" bottom: "<<bottom<<" top: "<<top<<" neardist: "<<neardist<<" fardist: "<<fardist<<std::endl;
 	glFrustum(left, right, bottom, top, neardist, fardist);
 
 	glMatrixMode(GL_MODELVIEW);
