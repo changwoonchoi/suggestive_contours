@@ -39,7 +39,7 @@ const bool use_3dtexc = false;
 
 // Globals: mesh...
 TriMesh *themesh;
-std::vector<std::vector<double>> pose_matrix(8, std::vector<double>(4, 0.0));
+std::vector<std::vector<double>> pose_matrix(800, std::vector<double>(4, 0.0));
 
 
 // Two cameras: the primary one, and an alternate one to fix the lines
