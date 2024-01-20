@@ -39,7 +39,7 @@ const bool use_3dtexc = false;
 
 // Globals: mesh...
 TriMesh *themesh;
-std::vector<std::vector<double>> pose_matrix(4, std::vector<double>(4, 0.0));
+std::vector<std::vector<double>> pose_matrix(8, std::vector<double>(4, 0.0));
 
 
 // Two cameras: the primary one, and an alternate one to fix the lines
@@ -47,11 +47,14 @@ std::vector<std::vector<double>> pose_matrix(4, std::vector<double>(4, 0.0));
 int dual_vpmode = false, mouse_moves_alt = false;
 GLCamera camera, camera_alt;
 xform xf, xf_alt;
-float fov = 1.414 * 0.69111112070083618f;
+float fov;
+
 double alt_projmatrix[16];
 char *xffilename; // Filename where we look for "home" position
 char *save_path;
 point viewpos;    // Current view position
+
+int global_counter = 0;
 
 // Toggles for drawing various lines
 int draw_extsil = 0, draw_c = 1, draw_sc = 1;
@@ -1816,12 +1819,6 @@ void redraw()
 {
 	timestamp t = now();
 	viewpos = inv(xf) * point(0,0,0);
-	std::cout<<endl;
-	std::cout<<endl;
-	std::cout<<endl;
-	std::cout<<"viewpos"<<viewpos<<std::endl;
-	std::cout<<endl;
-	std::cout<<endl;
 	GLUI_Master.auto_set_viewport();
 
 	// If dual viewports, first draw in window using camera_alt
@@ -1881,7 +1878,8 @@ void resetview()
 {
 	camera.stopspin();
 	camera_alt.stopspin();
-
+	//camera.set_fov(fov);
+	/*
 	if (!xf.read(xffilename)){
 		std::cout<<"xf file not found"<<endl;
 		xf = xform::trans(0, 0, -3.5f / fov * themesh->bsphere.r) *
@@ -1889,15 +1887,27 @@ void resetview()
 	} else{
 		xf = inv(xf);
 	}
+	*/
+	// xf.read(xffilename);
+	// xf = inv(xf);
+	// std::vector<std::vector<double>> cur_pose(4, std::vector<double>(4, 0.0));
+	double cur_pose[4][4];
+	for (int i = 0; i < 4; i++){
+		for (int j = 0; j < 4; j++)
+			cur_pose[i][j] = pose_matrix[global_counter * 4 + i][j];
+	}
+	xf = xf.fromarray(cur_pose);
+	xf = inv(xf);
+	camera.set_fov(fov);
 	
 	camera_alt = camera;
 	xf_alt = xf;
-	std::cout << "xf" << xf << std::endl;
-	std::cout << "bsphere center" << themesh->bsphere.center <<std::endl;
-	std::cout <<"bsphere r" << themesh->bsphere.r <<std::endl;
 
 	// Reset light position too
 	lightdir->reset();
+
+	std::cout<<"rendered "<<global_counter<<"th view"<<std::endl;
+	global_counter++;
 }
 
 
@@ -2329,6 +2339,41 @@ int main(int argc, char *argv[])
 			break;
 	}
 	const char *filename = argv[i];
+
+	themesh = TriMesh::read(filename);
+	if (!themesh)
+		usage(argv[0]);
+
+	string test_info = argv[i+1];
+	save_path = argv[i+2];
+
+	// read fov and test poses
+	std::cout << "read pose infos" << std::endl;
+	std::ifstream test_info_file(test_info);
+	if (!test_info_file.is_open()){
+		std::cerr << "Error opening file" << test_info << std::endl;
+		return 1; // return error code
+	}
+
+	// first line is fov
+	test_info_file >> fov;
+	fov *= sqrt(2.0f);
+	std::cout << "fov" << fov << std::endl;
+
+	for (int i = 0; i < 8; i ++){
+		for (int j = 0; j < 4; j++){
+			if(!(test_info_file >> pose_matrix[i][j])){
+				std::cerr << "Error reading file for pose_matrix" << std::endl;
+				return 1;
+			}
+		}
+	}
+
+	test_info_file.close();
+
+	std::cout<<"Read test infos done"<<std::endl;
+
+
 	// const char *posefilename = argv[i+1];
 	// std::cout << "filename" << filename <<std::endl;
 	// std::cout << "posefilename" << posefilename << std::endl;
@@ -2359,10 +2404,6 @@ int main(int argc, char *argv[])
 	// 	std::cout << '\n';
 	// }
 
-	themesh = TriMesh::read(filename);
-	if (!themesh)
-		usage(argv[0]);
-
 	// xffilename = new char[strlen(filename) + 4];
 	// strcpy(xffilename, filename);
 	// char *dot = strrchr(xffilename, '.');
@@ -2370,8 +2411,14 @@ int main(int argc, char *argv[])
 	// 	dot = strrchr(xffilename, 0);
 	// strcpy(dot, ".xf");
 
-	xffilename = argv[i+1];
-	save_path = argv[i+2];
+	// xffilename = argv[i+1];
+
+	// if (!fov_file.is_open()){
+	// 	std::cerr << "Error opening file" << fov_path << std::endl;
+	// 	return 1; // return error code
+	// }
+	// fov_file >> fov;
+	// fov *= sqrt(2.0f);
 
 	themesh->need_tstrips();
 	themesh->need_bsphere();
