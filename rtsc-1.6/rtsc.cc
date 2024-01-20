@@ -20,7 +20,7 @@ Real-time suggestive contours - these days, it also draws many other lines.
 #include "GLCamera.h"
 #include "timestamp.h"
 #include "GL/glui.h"
-#ifndef DARWIN
+#ifndef DARWI N
 //#include <GL/glext.h>
 #endif
 #include <algorithm>
@@ -2402,7 +2402,7 @@ int main(int argc, char *argv[])
 	fov *= sqrt(2.0f);
 	std::cout << "fov" << fov << std::endl;
 
-	for (int i = 0; i < 8; i ++){
+	for (int i = 0; i < 800; i ++){
 		for (int j = 0; j < 4; j++){
 			if(!(test_info_file >> pose_matrix[i][j])){
 				std::cerr << "Error reading file for pose_matrix" << std::endl;
