@@ -51,10 +51,10 @@ float fov;
 
 double alt_projmatrix[16];
 char *xffilename; // Filename where we look for "home" position
-char *save_path;
+string save_path;
 point viewpos;    // Current view position
 
-int global_counter = 0;
+int global_counter = -1;
 
 // Toggles for drawing various lines
 int draw_extsil = 0, draw_c = 1, draw_sc = 1;
@@ -1872,6 +1872,41 @@ void redraw()
 	}
 }
 
+void dump_image_by_idx(int idx = 0)
+{
+	// Find first non-used filename
+	FILE *f;
+	string _save_path = save_path + std::to_string(idx) + ".ppm";
+	std::cout<<"save to "<<_save_path<<std::endl;
+	f = fopen(_save_path.c_str(), "wb");
+	fflush(stdout);
+
+	// Read pixels
+	GLUI_Master.auto_set_viewport();
+	GLint V[4];
+	glGetIntegerv(GL_VIEWPORT, V);
+	GLint width = V[2], height = V[3];
+	char *buf = new char[width*height*3];
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(V[0], V[1], width, height, GL_RGB, GL_UNSIGNED_BYTE, buf);
+
+	// Flip top-to-bottom
+	for (int i = 0; i < height/2; i++) {
+		char *row1 = buf + 3 * width * i;
+		char *row2 = buf + 3 * width * (height - 1 - i);
+		for (int j = 0; j < 3 * width; j++)
+			swap(row1[j], row2[j]);
+	}
+
+	// Write out file
+	fprintf(f, "P6\n%d %d\n255\n", width, height);
+	fwrite(buf, width*height*3, 1, f);
+	fclose(f);
+	delete [] buf;
+
+	printf("Done.\n\n");
+}
+
 
 // Set the view to look at the middle of the mesh, from reasonably far away
 void resetview()
@@ -1907,6 +1942,10 @@ void resetview()
 	lightdir->reset();
 
 	std::cout<<"rendered "<<global_counter<<"th view"<<std::endl;
+
+	// save images
+	// dump_image_by_idx(global_counter);
+
 	global_counter++;
 }
 
@@ -1998,7 +2037,9 @@ void dump_image(int dummy = 0)
 	const char filenamepattern[] = "img%d.ppm";
 	int imgnum = 0;
 	FILE *f;
-	f = fopen(save_path, "wb");
+	string _save_path = save_path + std::to_string(global_counter) + ".ppm";
+	std::cout<<"save to "<<_save_path<<std::endl;
+	f = fopen(_save_path.c_str(), "wb");
 	fflush(stdout);
 
 	// while (1) {
@@ -2193,10 +2234,11 @@ void keyboardfunc(unsigned char key, int x, int y)
 			draw_hidden = !draw_hidden; break;
 		case 'H':
 			draw_H = !draw_H; break;
-		case 'i':
-			draw_isoph = !draw_isoph; break;
 		case 'I':
-			dump_image(); break;
+			draw_isoph = !draw_isoph; break;
+		case 'i':
+			// dump_image(); break;
+			dump_image_by_idx(global_counter); break;
 		case 'K':
 			draw_K = !draw_K; break;
 		case 'l':
