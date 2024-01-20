@@ -2202,6 +2202,8 @@ void mousebuttonfunc(int button, int state, int x, int y)
 void keyboardfunc(unsigned char key, int x, int y)
 {
 	switch (key) {
+		case 'j':
+			resetview(); break;
 		case ' ':
 			resetview(); break;
 		case 'a':
