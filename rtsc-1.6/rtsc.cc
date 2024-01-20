@@ -1844,7 +1844,7 @@ void redraw()
 	}
 	std::cout<<"HERE"<<std::endl;
 	point global_center = point(0,0,0);
-	camera.setupGL(xf * global_center, 1.0);
+	camera.setupGL(xf * global_center, 2.5);
 	camera.set_fov(fov);
 
 	cls();
@@ -1929,7 +1929,7 @@ void resetview()
 	double cur_pose[4][4];
 	for (int i = 0; i < 4; i++){
 		for (int j = 0; j < 4; j++)
-			cur_pose[i][j] = pose_matrix[global_counter * 4 + i][j];
+			cur_pose[i][j] = pose_matrix[(global_counter + 1) * 4 + i][j];
 	}
 	xf = xf.fromarray(cur_pose);
 	xf = inv(xf);
@@ -1941,7 +1941,7 @@ void resetview()
 	// Reset light position too
 	lightdir->reset();
 
-	std::cout<<"rendered "<<global_counter<<"th view"<<std::endl;
+	std::cout<<"rendered "<<global_counter + 1 <<"th view"<<std::endl;
 
 	// save images
 	// dump_image_by_idx(global_counter);
@@ -2468,7 +2468,10 @@ int main(int argc, char *argv[])
 	themesh->need_curvatures();
 	themesh->need_dcurv();
 	compute_feature_size();
-	currsmooth = 0.5f * themesh->feature_size();
+	currsmooth = 1.0f * themesh->feature_size();
+	filter_mesh();
+	filter_normals();
+	filter_curv();
 
 	char windowname[255];
 	sprintf(windowname, "RTSC - %s", filename);
