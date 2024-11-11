@@ -1,5 +1,6 @@
 import json
 import argparse
+import os
 
 def convert_nerf():
     NERF_SCENES = ['chair', 'drums', 'hotdog', 'lego', 'mic', 'ship']
@@ -62,11 +63,12 @@ def convert_dystroke():
     TYPES = ['novel', 'predict']
     for scene in SCENES:
         for type in TYPES:
-            with open(f"/home/ccw/project/dgmesh/data/dystroke/{scene}/{type}/transforms.json", "r") as f:
+            with open(f"/home/ccw/Downloads/dystroke_data/{scene}/{type}/transforms.json", "r") as f:
                 meta = json.load(f)
             fov = meta["camera_angle_x"]
+            os.makedirs(f"./data/dystroke/{scene}/{type}", exist_ok=True)
             for img_num in range(len(meta['frames'])):
-                f = open(f"./data/dystroke/{scene}/{type}/{img_num}.txt")
+                f = open(f"./data/dystroke/{scene}/{type}/{img_num}.txt", "w")
                 f.write(f"{fov}\n")
                 frame = meta['frames'][img_num]
                 transform = frame['transform_matrix']
