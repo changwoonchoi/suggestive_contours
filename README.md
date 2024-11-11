@@ -17,3 +17,16 @@ make
 [keyboard input]: enter ' ' and 'i' to move onto next viewpoint and save images.
 
 ```
+
+
+# Instruction for dg-mesh work
+```
+cd trimesh2
+make
+cd ../rtsc-1.7
+make
+
+./rtsc {mesh directory} {pose txt file directory} {output image fname}
+press 'i' to save image
+press 'q' to quit
+```
