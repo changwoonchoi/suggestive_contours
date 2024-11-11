@@ -2278,7 +2278,9 @@ void keyboardfunc(unsigned char key, int x, int y)
 		case 'i':
 			// dump_image(); break;
 			// dump_image_by_idx(global_counter); break;
-			dump_image_by_fname(); break;
+			dump_image_by_fname();
+			exit(0);
+			// break;
 		case 'K':
 			draw_K = !draw_K; break;
 		case 'l':

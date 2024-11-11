@@ -20,6 +20,12 @@ make
 
 
 # Instruction for dg-mesh work
+
+## preprocess poses
+```
+python make_pose_info.py
+```
+
 ```
 cd trimesh2
 make
@@ -27,6 +33,6 @@ cd ../rtsc-1.7
 make
 
 ./rtsc {mesh directory} {pose txt file directory} {output image fname}
+(You need to pre-create directories for output images)
 press 'i' to save image
-press 'q' to quit
 ```
